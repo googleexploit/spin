@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astatine Spin Wheel</title>
+    <link rel="icon" type="image/x-icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZFF9u7dI1RWFnWDR0ByH6uNnnzf94DfkEZw&s">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: url(https://images.hdqwalls.com/wallpapers/sagiri-izumi-anime-1g.jpg) no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        .wrapper1 {
+            width: 80%;
+            max-width: 500px;
+            max-height: 90vh;
+            background-color: #fff;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            padding: 3em;
+            border-radius: 20px;
+            box-shadow: 0 4em 5em rgba(27, 8, 53, 0.2);
+        }
+        .container1 {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #wheel {
+            max-height: inherit;
+            width: 100%;
+            top: 0;
+            padding: 0;
+        }
+        #spin-button {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            height: 26%;
+            width: 26%;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            background: radial-gradient(#4caf50 50%, #1b5e20 85%);
+            color: #33691e;
+            text-transform: uppercase;
+            font-size: 20px;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+        img {
+            position: absolute;
+            width: 4em;
+            top: 45%;
+            right: -8%;
+        }
+        #final-value {
+            font-size: 1.5em;
+            text-align: center;
+            margin-top: 1.5em;
+            color: #1b5e20;
+            font-weight: 500;
+        }
+        @media screen and (max-width: 768px) {
+            .wrapper1 {
+                width: 90%;
+                padding: 2em;
+            }
+            #spin-button {
+                height: 20%;
+                width: 20%;
+                font-size: 16px;
+            }
+            img {
+                right: -5%;
+                width: 3em;
+            }
+            #final-value {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper1">
+        <div class="container1">
+            <canvas id="wheel"></canvas>
+            <button id="spin-button">Spin Wheel</button>
+            <img src="spinner-arrow.svg" alt="">
+        </div>
+        <div id="final-value">
+            <p>Click on Spin Button to Start</p>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.1.0/chartjs-plugin-datalabels.min.js"></script>
+    <script>
+        const wheel = document.getElementById("wheel"),
+            spinBtn = document.getElementById("spin-button"),
+            finalValue = document.getElementById("final-value");
+    
+        // Define angle ranges and corresponding labels (adjust for offset)
+        const rotationValues = [
+            { minDegree: 331, maxDegree: 360, label: "Yes" },
+            { minDegree: 0, maxDegree: 30, label: "No" },
+            { minDegree: 31, maxDegree: 90, label: "Yes" },
+            { minDegree: 91, maxDegree: 150, label: "No" },
+            { minDegree: 151, maxDegree: 210, label: "Yes" },
+            { minDegree: 211, maxDegree: 270, label: "No" },
+            { minDegree: 271, maxDegree: 330, label: "Yes" },
+        ];
+    
+        // Chart data
+        const data = [16, 16, 16, 16, 16, 16];
+        const pieColors = ["#111", "#33", "#111", "#333", "#111", "#333"];
+    
+        // Create pie chart for the wheel
+        let myChart = new Chart(wheel, {
+            plugins: [ChartDataLabels],
+            type: "pie",
+            data: {
+                labels: ["Yes", "No", "Yes", "No", "Yes", "No", "Yes"],
+                datasets: [
+                    {
+                        backgroundColor: pieColors,
+                        data: data,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 0 },
+                plugins: {
+                    tooltip: false,
+                    legend: { display: false },
+                    datalabels: {
+                        color: "#ffffff",
+                        formatter: (_, context) =>
+                            context.chart.data.labels[context.dataIndex],
+                        font: { size: 24 },
+                    },
+                },
+            },
+        });
+    
+        // Function to get value from angle
+        const valueGenerator = (angleValue) => {
+            for (let i = 0; i < rotationValues.length; i++) {
+                const rotation = rotationValues[i];
+                if (angleValue >= rotation.minDegree && angleValue <= rotation.maxDegree) {
+                    const label = rotation.label; // Get the label (Yes/No)
+                    finalValue.innerHTML = `<p>Value: ${label}</p>`;
+                    spinBtn.disabled = false;
+                    break;
+                }
+            }
+        };
+    
+        // Spinner logic
+        let count = 0;
+        let resultValue = 101;
+        spinBtn.addEventListener("click", () => {
+            spinBtn.disabled = true;
+            finalValue.innerHTML = `<p>Good Luck!</p>`;
+            let randomDegree = Math.floor(Math.random() * 360);
+            let rotationInterval = setInterval(() => {
+                myChart.options.rotation += resultValue;
+                myChart.update();
+                if (myChart.options.rotation >= 360) {
+                    count += 1;
+                    resultValue -= 5;
+                    myChart.options.rotation = 0;
+                } else if (count > 15 && myChart.options.rotation == randomDegree) {
+                    const normalizedAngle = randomDegree % 360; // Normalize angle
+                    valueGenerator(normalizedAngle);
+                    clearInterval(rotationInterval);
+                    count = 0;
+                    resultValue = 101;
+                }
+            }, 10);
+        });
+    </script>
+    
+</body>
+</html>
